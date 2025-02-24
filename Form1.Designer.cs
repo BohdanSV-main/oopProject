@@ -1,6 +1,6 @@
-﻿namespace Lab1
+﻿namespace GameAssistant
 {
-    partial class Form1
+    partial class MainForm
     {
         /// <summary>
         /// Обязательная переменная конструктора.
@@ -42,6 +42,9 @@
         }
 
         #endregion
+
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button2;
     }
 }
 
