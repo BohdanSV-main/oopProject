@@ -213,14 +213,10 @@ git branch <branch_name> - вводимо у консоль
 git switch <назва_гілки> - вводимо у консоль
 
 #### *13) Як об’єднати гілку в main після завершення лабораторної роботи?*
-1️) Перейти на main: git checkout main  
-
-2) Оновити main:git pull origin main
-   
-4) Об'єднати гілку: git merge <назва_гілки>
-   
-6) Видалити гілку: git branch -d <назва_гілки>
-    
-8) Відправити зміни на сервер: git push origin main
+1. Перейти на main: git checkout main  
+2. Оновити main:git pull origin main  
+3. Об'єднати гілку: git merge <назва_гілки>
+4. Видалити гілку: git branch -d <назва_гілки>  
+5. Відправити зміни на сервер: git push origin main
 
 
