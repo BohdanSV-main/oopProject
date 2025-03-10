@@ -3,18 +3,17 @@ using System.Collections.Generic;
 using System.Data;
 using System.Windows.Forms;
 using GameAssistant;
+using System.Linq;
 
 namespace GameAssistant
 {
     // Інтерфейс IRoleAction визначає метод PerformRoleAction, який мають реалізувати всі класи, що його імплементують.
-    // Це приклад інтерфейсу
     public interface IRoleAction
     {
         void PerformRoleAction();
     }
 
     // Абстрактний клас General_Props є базовим класом для всіх ролей у грі.
-    // Це приклад абстрактного класу та динамічного поліморфізму (через перевизначення методів).
     public abstract class General_Props : IRoleAction
     {
         protected string votedFor;
@@ -28,10 +27,10 @@ namespace GameAssistant
         public bool IsActiveRole => Role == "Шериф" || Role == "Лікар" || Role == "Мафія" || Role == "Дон";
         public string Role { get => role; set => role = value; }
 
-        // Це приклад **абстрактного методу** та **динамічного поліморфізму**.
+        // Абстрактний метод, який мають реалізувати всі похідні класи.
         public abstract void PerformRoleAction();
 
-        // Це приклад **віртуального методу** та **динамічного поліморфізму**.
+        // Віртуальний метод для відображення статусу гравця.
         public virtual void DisplayStatus()
         {
             Console.WriteLine($"Роль: {Role}, Живий: {IsAlive}, Виставлений: {IsNominated}, Голосував за: {VotedFor}");
@@ -39,7 +38,6 @@ namespace GameAssistant
     }
 
     // Клас Civilian успадковує General_Props і реалізує метод PerformRoleAction.
-    // Це приклад **наслідування** та **динамічного поліморфізму**
     public class Civilian : General_Props
     {
         public Civilian()
@@ -50,7 +48,7 @@ namespace GameAssistant
             VotedFor = "";
         }
 
-        // Перевизначення абстрактного методу PerformRoleAction.
+        // Реалізація методу PerformRoleAction для мирного жителя.
         public override void PerformRoleAction()
         {
             Console.WriteLine("Мирний житель не має активної дії.");
@@ -58,7 +56,6 @@ namespace GameAssistant
     }
 
     // Клас Doctor успадковує Civilian і додає нову функціональність (метод HealPlayer).
-    // Це приклад **наслідування**
     public class Doctor : Civilian
     {
         public Doctor() : base()
@@ -66,7 +63,7 @@ namespace GameAssistant
             Role = "Лікар";
         }
 
-        // Новий метод HealPlayer, який дозволяє лікарю лікувати гравців.
+        // Метод для лікування гравця.
         public void HealPlayer(General_Props player)
         {
             if (!player.IsAlive)
@@ -80,14 +77,14 @@ namespace GameAssistant
             }
         }
 
-        // Перевизначення методу PerformRoleAction для лікаря.
+        // Реалізація методу PerformRoleAction для лікаря.
         public override void PerformRoleAction()
         {
             Console.WriteLine("Лікар може врятувати одного гравця за ніч.");
         }
     }
 
-    // Клас GameMaster керує(буде) гравцями та їх діями.
+    // Клас GameMaster керує гравцями та їх діями.
     public class GameMaster
     {
         public List<General_Props> Players { get; private set; }
@@ -97,7 +94,7 @@ namespace GameAssistant
             Players = new List<General_Props>();
         }
 
-        // Метод для додавання(буде) гравця до списку.
+        // Метод для додавання гравця до списку.
         public void AddPlayer(General_Props player)
         {
             Players.Add(player);
@@ -118,19 +115,113 @@ namespace GameAssistant
         }
     }
 
-    // Це приклад інкапсуляції :)
+    // Інтерфейс IRepository<T> визначає основні методи CRUD.
+    public interface IRepository<T>
+    {
+        void Add(T item);
+        void Remove(T item);
+        T GetById(int id);
+        IEnumerable<T> GetAll();
+        void Update(T item);
+    }
+
+    // Клас Repository<T> реалізує інтерфейс IRepository<T>.
+    public class Repository<T> : IRepository<T> where T : class
+    {
+        private List<T> _items = new List<T>();
+
+        // Додає елемент до репозиторію.
+        public void Add(T item)
+        {
+            _items.Add(item);
+            Console.WriteLine("Елемент додано до репозиторію.");
+        }
+
+        // Видаляє елемент з репозиторію.
+        public void Remove(T item)
+        {
+            _items.Remove(item);
+            Console.WriteLine("Елемент видалено з репозиторію.");
+        }
+
+        // Отримує елемент за ID.
+        public T GetById(int id)
+        {
+            var item = _items.FirstOrDefault(i => (int)i.GetType().GetProperty("Id").GetValue(i) == id);
+            return item;
+        }
+
+        // Отримує всі елементи з репозиторію.
+        public IEnumerable<T> GetAll()
+        {
+            return _items;
+        }
+
+        // Оновлює елемент у репозиторії.
+        public void Update(T item)
+        {
+            var existingItem = _items.FirstOrDefault(i => i == item);
+            if (existingItem != null)
+            {
+                _items[_items.IndexOf(existingItem)] = item;
+                Console.WriteLine("Елемент оновлено.");
+            }
+        }
+
+        // Сортує елементи за вказаним ключем.
+        public IEnumerable<T> SortBy(Func<T, object> keySelector)
+        {
+            return _items.OrderBy(keySelector).ToList();
+        }
+
+        // Відображає поточний стан репозиторію.
+        public void ShowRepositoryState()
+        {
+            Console.WriteLine("Поточний стан репозиторію:");
+            foreach (var item in _items)
+            {
+                Console.WriteLine(item.ToString());
+            }
+        }
+    }
+
+    // Клас PlayerRepository успадковує Repository<General_Props> і додає метод для отримання живих гравців.
+    public class PlayerRepository : Repository<General_Props>
+    {
+        public IEnumerable<General_Props> GetAlivePlayers()
+        {
+            return GetAll().Where(p => p.IsAlive).ToList();
+        }
+    }
+
+    // Клас RoleRepository успадковує Repository<string> і додає метод для отримання активних ролей.
+    public class RoleRepository : Repository<string>
+    {
+        public IEnumerable<string> GetActiveRoles()
+        {
+            return GetAll().Where(r => r == "Шериф" || r == "Лікар" || r == "Мафія" || r == "Дон").ToList();
+        }
+    }
+
+    // Головна форма програми.
     public partial class MainForm : Form
     {
         private GameMaster gameMaster;
+        private PlayerRepository playerRepository;
+        private RoleRepository roleRepository;
         private DataGridView dgv;
         private Button btnVote;
         private Button btnNominate;
         private Button btnHeal;
+        private Button btnShowState;
+        private Button btnSortByRole;
 
         public MainForm()
         {
             InitializeComponent();
             gameMaster = new GameMaster();
+            playerRepository = new PlayerRepository();
+            roleRepository = new RoleRepository();
             SetupUI();
         }
 
@@ -170,13 +261,21 @@ namespace GameAssistant
             btnHeal = new Button { Text = "Лікувати", Dock = DockStyle.Bottom };
             btnHeal.Click += BtnHeal_Click;
 
+            btnShowState = new Button { Text = "Показати стан репозиторію", Dock = DockStyle.Bottom };
+            btnShowState.Click += BtnShowState_Click;
+
+            btnSortByRole = new Button { Text = "Сортувати за ролями", Dock = DockStyle.Bottom };
+            btnSortByRole.Click += BtnSortByRole_Click;
+
             Controls.Add(dgv);
             Controls.Add(btnVote);
             Controls.Add(btnNominate);
             Controls.Add(btnHeal);
+            Controls.Add(btnShowState);
+            Controls.Add(btnSortByRole);
         }
 
-
+        // Оновлює статус "Живий" у таблиці.
         private void UpdateAliveStatus()
         {
             foreach (DataGridViewRow row in dgv.Rows)
@@ -219,9 +318,171 @@ namespace GameAssistant
                 UpdateAliveStatus();
             }
         }
+
+        // Обробник події для кнопки "Показати стан репозиторію".
+        private void BtnShowState_Click(object sender, EventArgs e)
+        {
+            // Оновлюємо дані в репозиторії з таблиці
+            playerRepository = new PlayerRepository();
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row.Cells["Player"].Value != null)
+                {
+                    string role = row.Cells["Role"].Value.ToString();
+                    bool isAlive = row.Cells["Alive"].Value.ToString() == "Так";
+
+                    General_Props player;
+                    switch (role)
+                    {
+                        case "Лікар":
+                            player = new Doctor();
+                            break;
+                        case "Мафія":
+                            player = new Mafia();
+                            break;
+                        default:
+                            player = new Civilian();
+                            break;
+                    }
+
+                    player.Role = role;
+                    player.IsAlive = isAlive;
+                    player.IsNominated = false; // Додайте логіку для цього поля, якщо потрібно
+
+                    playerRepository.Add(player);
+                }
+            }
+
+            FormShowState formShowState = new FormShowState(playerRepository);
+            formShowState.ShowDialog();
+        }
+
+        // Обробник події для кнопки "Сортувати за ролями".
+        private void BtnSortByRole_Click(object sender, EventArgs e)
+        {
+            // Оновлюємо дані в репозиторії з таблиці
+            playerRepository = new PlayerRepository();
+            foreach (DataGridViewRow row in dgv.Rows)
+            {
+                if (row.Cells["Player"].Value != null)
+                {
+                    string role = row.Cells["Role"].Value.ToString();
+                    bool isAlive = row.Cells["Alive"].Value.ToString() == "Так";
+
+                    General_Props player;
+                    switch (role)
+                    {
+                        case "Лікар":
+                            player = new Doctor();
+                            break;
+                        case "Мафія":
+                            player = new Mafia();
+                            break;
+                        default:
+                            player = new Civilian();
+                            break;
+                    }
+
+                    player.Role = role;
+                    player.IsAlive = isAlive;
+                    player.IsNominated = false; // Додайте логіку для цього поля, якщо потрібно
+
+                    playerRepository.Add(player);
+                }
+            }
+
+            FormSortByRole formSortByRole = new FormSortByRole(playerRepository);
+            formSortByRole.ShowDialog();
+        }
+    }
+
+    // Форма для відображення стану репозиторію.
+    public class FormShowState : Form
+    {
+        private PlayerRepository _playerRepository;
+        private TextBox txtOutput;
+
+        public FormShowState(PlayerRepository playerRepository)
+        {
+            _playerRepository = playerRepository;
+            InitializeComponent();
+        }
+
+        private void InitializeComponent()
+        {
+            this.Text = "Стан репозиторію";
+            this.Size = new System.Drawing.Size(400, 300);
+
+            txtOutput = new TextBox
+            {
+                Multiline = true,
+                ScrollBars = ScrollBars.Vertical,
+                Dock = DockStyle.Fill,
+                ReadOnly = true
+            };
+
+            this.Controls.Add(txtOutput);
+
+            ShowRepositoryState();
+        }
+
+        // Відображає поточний стан репозиторію.
+        private void ShowRepositoryState()
+        {
+            txtOutput.Clear();
+            txtOutput.AppendText("Поточний стан репозиторію:\n");
+            foreach (var player in _playerRepository.GetAll())
+            {
+                txtOutput.AppendText($"{player.Role} (Живий: {player.IsAlive}, Виставлений: {player.IsNominated})\n");
+            }
+        }
+    }
+
+    // Форма для відображення відсортованих гравців за ролями.
+    public class FormSortByRole : Form
+    {
+        private PlayerRepository _playerRepository;
+        private TextBox txtOutput;
+
+        public FormSortByRole(PlayerRepository playerRepository)
+        {
+            _playerRepository = playerRepository;
+            InitializeComponent();
+        }
+
+        private void InitializeComponent()
+        {
+            this.Text = "Сортування за ролями";
+            this.Size = new System.Drawing.Size(400, 300);
+
+            txtOutput = new TextBox
+            {
+                Multiline = true,
+                ScrollBars = ScrollBars.Vertical,
+                Dock = DockStyle.Fill,
+                ReadOnly = true
+            };
+
+            this.Controls.Add(txtOutput);
+
+            ShowSortedPlayers();
+        }
+
+        // Відображає відсортованих гравців за ролями.
+        private void ShowSortedPlayers()
+        {
+            txtOutput.Clear();
+            var sortedPlayers = _playerRepository.SortBy(p => p.Role);
+            txtOutput.AppendText("Гравці, відсортовані за ролями:\n");
+            foreach (var player in sortedPlayers)
+            {
+                txtOutput.AppendText($"{player.Role} (Живий: {player.IsAlive})\n");
+            }
+        }
     }
 }
 
+// Клас Mafia успадковує General_Props і реалізує метод PerformRoleAction.
 public class Mafia : General_Props
 {
     public bool IsMafia { get; private set; }
@@ -235,7 +496,7 @@ public class Mafia : General_Props
         IsMafia = true;
     }
 
-    // Статичний поліморфізм (перевантаження методу KillPlayer)
+    // Метод для вбивства гравця.
     public void KillPlayer(General_Props player)
     {
         if (player.IsAlive)
@@ -249,6 +510,7 @@ public class Mafia : General_Props
         }
     }
 
+    // Перевантажений метод для вбивства гравця з причиною.
     public void KillPlayer(General_Props player, string reason)
     {
         if (player.IsAlive)
@@ -262,17 +524,19 @@ public class Mafia : General_Props
         }
     }
 
-    // Статичний поліморфізм (перевантаження методу LeaveComment)
+    // Метод для залишення коментаря.
     public void LeaveComment(string comment)
     {
         Console.WriteLine($"Мафія залишила коментар: {comment}");
     }
 
+    // Перевантажений метод для залишення коментаря про гравця.
     public void LeaveComment(General_Props player, string comment)
     {
         Console.WriteLine($"Мафія залишила коментар про {player.Role}: {comment}");
     }
 
+    // Реалізація методу PerformRoleAction для мафії.
     public override void PerformRoleAction()
     {
         Console.WriteLine("Мафія може вбити одного гравця за ніч.");
