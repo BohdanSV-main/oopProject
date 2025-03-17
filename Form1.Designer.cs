@@ -1,6 +1,6 @@
 ﻿namespace GameAssistant
 {
-    partial class MainForm
+    partial class Form1
     {
         /// <summary>
         /// Обязательная переменная конструктора.
@@ -36,15 +36,11 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(937, 547);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "MainForm";
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Button button2;
     }
 }
-
